@@ -1,0 +1,118 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RoleName {
+  ADMIN
+  MENTOR
+  USER
+}
+
+model User {
+  id       String   @id @default(cuid())
+  email    String   @unique
+  password String
+  role     RoleName
+  name     String
+  surname  String
+
+  teamId       String?
+  professionId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  TeamUser           TeamUser[]
+  Profession         Profession?          @relation(fields: [professionId], references: [id])
+  MentorRequest      MentorRequest[]
+  MentorAvailability MentorAvailability[]
+  TeamMentor         TeamMentor[]
+}
+
+model Team {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  mentorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  TeamUser      TeamUser[]
+  MentorRequest MentorRequest[]
+  TeamMentor    TeamMentor[]
+}
+
+model TeamUser {
+  id        String   @id @default(cuid())
+  teamId    String
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  team Team @relation(fields: [teamId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Profession {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  User User[]
+}
+
+enum MentorRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  DONE
+}
+
+model MentorRequest {
+  id        String              @id @default(cuid())
+  teamId    String
+  userId    String
+  note      String
+  status    MentorRequestStatus
+  startTime DateTime
+  endTime   DateTime
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  team Team @relation(fields: [teamId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+}
+
+model MentorAvailability {
+  id        String   @id @default(cuid())
+  userId    String
+  startTime DateTime
+  endTime   DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model TeamMentor {
+  id        String   @id @default(cuid())
+  teamId    String
+  mentorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  team   Team @relation(fields: [teamId], references: [id])
+  mentor User @relation(fields: [mentorId], references: [id])
+}
