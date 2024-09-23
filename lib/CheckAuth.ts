@@ -5,7 +5,7 @@ import { JWT_SECRET } from "./contants";
 import { NASAJWTPayload } from "./types";
 
 export const CheckAuth = async (
-  is?: RoleName,
+  is?: RoleName | RoleName[],
   req?: Request
 ): Promise<NASAJWTPayload> => {
   // Check if the Authorization header is present
@@ -26,13 +26,17 @@ export const CheckAuth = async (
 
   // Verify the token
   try {
-    const ret = await jwtVerify(token, JWT_SECRET, {
+    const ret = await jwtVerify<NASAJWTPayload>(token, JWT_SECRET, {
       algorithms: ["HS256"],
     });
 
-    if (is && ret.payload.role !== is) {
-      throw new Error("Invalid role");
-    }
+    if (is)
+      if (Array.isArray(is)) {
+        if (!is.includes(ret.payload.role as RoleName))
+          throw new Error("Invalid role");
+      } else {
+        if (ret.payload.role !== is) throw new Error("Invalid role");
+      }
 
     return ret.payload as NASAJWTPayload;
   } catch (error) {

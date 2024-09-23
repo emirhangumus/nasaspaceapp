@@ -10,49 +10,25 @@ export const getUserData = async (email: string) => {
       email: true,
       name: true,
       surname: true,
+      photo: true,
       role: true,
-      teamId: true,
-      professionId: true,
     },
   });
 
-  return user;
+  if (!user) return null;
 
-  //   if (!user) {
-  //     return null;
-  //   }
+  const team = await prisma.team.findFirst({
+    where: {
+      TeamUser: {
+        some: {
+          userId: user.id,
+        },
+      },
+    },
+  });
 
-  //   if (user.role.name == "USER") {
-  //     const ret = await prisma.user.findFirst({
-  //       where: {
-  //         email,
-  //       },
-  //       select: {
-  //         id: true,
-  //         email: true,
-  //         role: true,
-  //         name: true,
-  //         surname: true,
-  //         teamId: true,
-  //       },
-  //     });
-  //     return ret;
-  //   }
-  //   if (user.role.name == "MENTOR") {
-  //     const ret = await prisma.user.findFirst({
-  //       where: {
-  //         email,
-  //       },
-  //       select: {
-  //         id: true,
-  //         email: true,
-  //         role: true,
-  //         name: true,
-  //         surname: true,
-  //       },
-  //     });
-  //     return ret;
-  //   }
-
-  //   return null;
+  return {
+    ...user,
+    teamId: team ? team.id : null,
+  };
 };

@@ -3,7 +3,9 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { register } from "@/lib/serverActions/auth";
+import { RoleName } from "@prisma/client";
 import { useState } from "react";
 
 type FormState = {
@@ -11,7 +13,11 @@ type FormState = {
     message: string;
 }
 
-export const Form = () => {
+type FormProps = {
+    mode?: "init" | "admin"
+}
+
+export const Form = ({ mode = "init" }: FormProps) => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [name, setName] = useState("");
@@ -20,17 +26,37 @@ export const Form = () => {
         status: "idle",
         message: "",
     });
+    const [role, setRole] = useState<RoleName>("USER");
 
     const handleSubmit = async () => {
         setState({ status: "loading", message: "" });
-        const ret = await register({ email, password, name, surname, role: "ADMIN" });
-        if (ret.success) {
-            setState({ status: "success", message: "Register successful. Redirecting..." });
-            setTimeout(() => {
-                window.location.href = "/";
-            }, 500)
-        } else {
-            setState({ status: "error", message: ret.message });
+        if (mode == 'init') {
+            const ret = await register({ email, password, name, surname, role: "ADMIN" });
+            if (ret.success) {
+                setState({ status: "success", message: "Register successful. Redirecting..." });
+                setTimeout(() => {
+                    window.location.href = "/";
+                }, 500)
+            } else {
+                setState({ status: "error", message: ret.message });
+            }
+        }
+        if (mode == 'admin') {
+            const ret = await register({ email, password, name, surname, role });
+            if (ret.success) {
+                setState({ status: "success", message: "User created successfully." });
+                setEmail("");
+                setPassword("");
+                setName("");
+                setSurname("");
+                setRole("USER");
+                setTimeout(() => {
+                    setState({ status: "idle", message: "" });
+                }, 2000);
+            }
+            else {
+                setState({ status: "error", message: ret.message });
+            }
         }
     };
 
@@ -78,10 +104,27 @@ export const Form = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     id="password" type="password" required />
             </div>
+            {mode === "admin" && (
+                <>
+                    <div className="grid gap-2">
+                        <Label htmlFor="role">Role</Label>
+                        <Select value={role} onValueChange={(value) => setRole(value as RoleName)} >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select role" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="ADMIN">Admin</SelectItem>
+                                <SelectItem value="MENTOR">Mentor</SelectItem>
+                                <SelectItem value="USER">User</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </>
+            )}
             <Button
                 disabled={state.status === "loading" || state.status === "success"}
                 type="submit" className="w-full" onClick={handleSubmit}>
-                Login
+                Register
             </Button>
             {state.status === "error" && (
                 <div className="text-red-500">{state.message}</div>

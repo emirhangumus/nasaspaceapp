@@ -1,27 +1,20 @@
 type ResponserProps<T> = {
   message: string;
-} & (
-  | {
-      success: false;
-      data: null;
-    }
-  | {
-      success: true;
-      data: T;
-    }
-);
+  data: T;
+  success: boolean;
+};
 
-export type ResponserReturn = {
+export type ResponserReturn<T> = {
   success: boolean;
   message: string;
-  data: any;
+  data: T;
 };
 
 export const Responser = <T>({
   success,
   message,
   data,
-}: ResponserProps<T>): ResponserReturn => {
+}: ResponserProps<T>): ResponserReturn<T> => {
   return {
     success,
     message,

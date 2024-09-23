@@ -1,27 +1,24 @@
 "use server";
 
+import { CheckAuth } from "@/lib/CheckAuth";
+import { Responser } from "@/lib/Responser";
+import { JWT_SECRET } from "@/lib/contants";
+import prisma from "@/lib/db/prisma";
+import { NASAJWTPayload } from "@/lib/types";
+import { RoleName } from "@prisma/client";
 import bcrypt from "bcrypt";
-import { z } from "zod";
 import { SignJWT } from "jose";
 import { cookies } from "next/headers";
-import { Responser, ResponserReturn } from "@/lib/Responser";
-import prisma from "@/lib/db/prisma";
+import { z } from "zod";
 import { getTeam } from "../team";
 import { getUserData } from "../user";
-import { JWT_SECRET } from "@/lib/contants";
-import { NASAJWTPayload } from "@/lib/types";
-import { CheckAuth } from "@/lib/CheckAuth";
-import { RoleName } from "@prisma/client";
 
 const loginSchema = z.object({
   email: z.string().email().max(255),
   password: z.string().max(255),
 });
 
-export const login = async (rowData: {
-  email: string;
-  password: string;
-}): Promise<ResponserReturn> => {
+export const login = async (rowData: { email: string; password: string }) => {
   try {
     const data = loginSchema.parse(rowData);
     const user = await prisma.user.findFirst({
@@ -66,15 +63,21 @@ export const login = async (rowData: {
       });
     }
 
+    console.log(userData);
+
     const team = await getTeam(userData.teamId);
 
     const payload: NASAJWTPayload = {
-      email: userData.email,
+      id: userData.id,
+      name: userData.name,
+      surname: userData.surname,
       role: userData.role,
     };
 
+    console.log(team);
+
     if (team) {
-      payload.teamCode = team.code;
+      payload.teamId = team.id;
     }
 
     const token = await new SignJWT(payload)
@@ -118,7 +121,7 @@ export const register = async (rowData: {
   name: string;
   surname: string;
   role: RoleName;
-}): Promise<ResponserReturn> => {
+}) => {
   try {
     const data = registerSchema.parse(rowData);
 
@@ -197,6 +200,60 @@ export const register = async (rowData: {
     return Responser({
       data: null,
       message: "User created successfully",
+      success: true,
+    });
+  } catch (error) {
+    console.error(error);
+    return Responser({
+      data: null,
+      message: "Bad request",
+      success: false,
+    });
+  }
+};
+
+export const getCurrentUser = async () => {
+  try {
+    const user = await CheckAuth();
+
+    if (!user) {
+      return Responser({
+        data: null,
+        message: "Unauthorized",
+        success: false,
+      });
+    }
+
+    return Responser({
+      data: user,
+      message: "Success",
+      success: true,
+    });
+  } catch (error) {
+    console.error(error);
+    return Responser({
+      data: null,
+      message: "Bad request",
+      success: false,
+    });
+  }
+};
+
+export const getCurrentUserRole = async () => {
+  try {
+    const user = await CheckAuth();
+
+    if (!user) {
+      return Responser({
+        data: null,
+        message: "Unauthorized",
+        success: false,
+      });
+    }
+
+    return Responser({
+      data: user.role,
+      message: "Success",
       success: true,
     });
   } catch (error) {

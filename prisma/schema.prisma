@@ -26,25 +26,22 @@ model User {
   role     RoleName
   name     String
   surname  String
-
-  teamId       String?
-  professionId String?
+  photo    String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  TeamUser           TeamUser[]
-  Profession         Profession?          @relation(fields: [professionId], references: [id])
-  MentorRequest      MentorRequest[]
-  MentorAvailability MentorAvailability[]
-  TeamMentor         TeamMentor[]
+  TeamMentor       TeamMentor[]
+  TeamUser         TeamUser[]
+  MentorRequest    MentorRequest[]
+  MentorSlots      MentorSlots[]
+  MentorProfession MentorProfession[]
 }
 
 model Team {
-  id        String   @id @default(cuid())
-  code      String   @unique
+  id        String   @id
   name      String
-  mentorId  String
+  mentorId  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -54,7 +51,7 @@ model Team {
 }
 
 model TeamUser {
-  id        String   @id @default(cuid())
+  id        Int      @id @default(autoincrement())
   teamId    String
   userId    String
   createdAt DateTime @default(now())
@@ -65,23 +62,32 @@ model TeamUser {
 }
 
 model Profession {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               Int                @id @default(autoincrement())
+  name             String             @unique
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  MentorProfession MentorProfession[]
+}
 
-  User User[]
+model MentorProfession {
+  id           Int      @id @default(autoincrement())
+  mentorId     String
+  professionId Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  mentor     User       @relation(fields: [mentorId], references: [id])
+  Profession Profession @relation(fields: [professionId], references: [id])
 }
 
 enum MentorRequestStatus {
   PENDING
-  ACCEPTED
   REJECTED
   DONE
 }
 
 model MentorRequest {
-  id        String              @id @default(cuid())
+  id        Int                 @id @default(autoincrement())
   teamId    String
   userId    String
   note      String
@@ -95,8 +101,8 @@ model MentorRequest {
   user User @relation(fields: [userId], references: [id])
 }
 
-model MentorAvailability {
-  id        String   @id @default(cuid())
+model MentorSlots {
+  id        Int      @id @default(autoincrement())
   userId    String
   startTime DateTime
   endTime   DateTime
@@ -107,7 +113,7 @@ model MentorAvailability {
 }
 
 model TeamMentor {
-  id        String   @id @default(cuid())
+  id        Int      @id @default(autoincrement())
   teamId    String
   mentorId  String
   createdAt DateTime @default(now())
@@ -115,4 +121,12 @@ model TeamMentor {
 
   team   Team @relation(fields: [teamId], references: [id])
   mentor User @relation(fields: [mentorId], references: [id])
+}
+
+model Announcement {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
