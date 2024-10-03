@@ -2,19 +2,29 @@ import { MentorBox } from "@/components/MentorBox";
 import { getMentorsByProfession } from "@/lib/serverActions/mentor";
 import { getProfession } from "@/lib/serverActions/professions";
 import { redirect } from "next/navigation";
+import { Fragment } from "react";
 
 type Params = {
     professionId: string;
 }
 
+export const metadata = {
+    title: "Mentor Request",
+    description: "Find mentors for your profession",
+}
+
 export default async function Page({ params }: { params: Params }) {
 
     const profession = await getProfession(+params.professionId);
+
     if (!profession) return redirect("/board");
+
     const mentors = await getMentorsByProfession(profession.id);
 
+    if (!mentors) return redirect("/board");
+
     return (
-        <>
+        <Fragment>
             <div>
                 <h2 className="text-3xl font-bold font-mono border-b border-blue-300 pb-2">Mentor Request</h2>
             </div>
@@ -29,6 +39,6 @@ export default async function Page({ params }: { params: Params }) {
                     )) : <span>No mentors available</span>}
                 </div>
             </div>
-        </>
+        </Fragment>
     )
 }

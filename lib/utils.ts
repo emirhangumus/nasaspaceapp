@@ -68,3 +68,13 @@ export function toISODateTime(time: string): string {
   const today = new Date().toISOString().split("T")[0]; // Get current date in YYYY-MM-DD format
   return `${today}T${time}:00.000Z`; // Combine date with the time and append seconds and milliseconds
 }
+
+export function fromDateToTime(date: Date): string {
+  return date.toTimeString().split(" ")[0].slice(0, -3);
+}
+
+export function dateToTimeString(date: Date): string {
+  const hours = date.getUTCHours().toString().padStart(2, "0");
+  const minutes = date.getUTCMinutes().toString().padStart(2, "0");
+  return `${hours}.${minutes}`;
+}

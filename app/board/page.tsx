@@ -1,17 +1,24 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { getAnnouncements } from "@/lib/serverActions/announcement";
 import { getCurrentUser, getCurrentUserRole } from "@/lib/serverActions/auth";
+import { getMentorBy } from "@/lib/serverActions/mentor";
+import { getAllProfessions } from "@/lib/serverActions/professions";
+import { getMentorRequestByTeam } from "@/lib/serverActions/slots";
 import { getTeam, TeamData } from "@/lib/serverActions/team";
-import { NASAJWTPayload } from "@/lib/types";
+import { AwaitedReturnType, NASAJWTPayload } from "@/lib/types";
+import { dateToTimeString } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { NeedHelpCard } from "./_components/user/NeedHelp";
-import { getAllProfessions } from "@/lib/serverActions/professions";
-import { getAnnouncements } from "@/lib/serverActions/announcement";
-import { getMentorBy } from "@/lib/serverActions/mentor";
+import { MentorRequestCancelDialog } from "./_components/user/MentorRequestCancelDialog";
 
 export const dynamic = 'force-dynamic';
+
+export const metadata = {
+    title: "Board",
+}
 
 export default async function Board() {
     const role = await getCurrentUserRole();
@@ -82,19 +89,60 @@ async function UserBoard() {
     const user = await getCurrentUser();
     if (!user.success || !user.data?.teamId) redirect("/");
     const d = await getTeam(user.data.teamId);
+    if (!d) redirect("/");
     const professions = await getAllProfessions();
+    const currentMentorRequest = await getMentorRequestByTeam(d.id);
 
     return (
         <div>
-            {/* <pre>{JSON.stringify(d, null, 2)}</pre> */}
             <div className="flex flex-col gap-8">
                 <TeamCard team={d} user={user.data} />
                 <Announcements />
+                <TeamMentorRequest mentorRequest={currentMentorRequest} />
                 <NeedHelpCard professions={professions} />
             </div>
         </div>
     )
 }
+
+function TeamMentorRequest({ mentorRequest }: { mentorRequest: AwaitedReturnType<typeof getMentorRequestByTeam> }) {
+
+    return (
+        <div>
+            <h2 className="text-3xl font-bold font-mono border-b border-blue-300 pb-2 mb-4">Mentor Request</h2>
+            {mentorRequest ? (
+                <div className="shadow-inner shadow-blue-400 border-x-2 border-t-2 last:border-b-2 rounded-xl border-blue-700 p-4 bg-gradient-to-br from-transparent from-60% to-blue-800 relative">
+                    <h3 className="text-2xl font-bold font-mono">
+                        Mentor Request
+                    </h3>
+                    <div className="py-4 font-mono">
+                        <div className="flex flex-row justify-between items-center">
+                            <Badge>{dateToTimeString(new Date(mentorRequest.startTime))} - {dateToTimeString(new Date(mentorRequest.endTime))}</Badge>
+                            <MentorRequestCancelDialog mentorRequest={mentorRequest} />
+                        </div>
+                        <div className="flex flex-col mt-2">
+                            <span className="font-bold text-4xl font-mono">{mentorRequest.user.name}</span>
+                            <span className="font-bold text-lg font-mono">{mentorRequest.user.surname}</span>
+                        </div>
+                    </div>
+                </div>
+            ) : (
+                <div className="shadow-inner shadow-blue-400 border-x-2 border-t-2 last:border-b-2 rounded-xl border-blue-700 p-4 bg-gradient-to-br from-transparent from-60% to-blue-800">
+                    <h3 className="text-2xl font-bold font-mono">
+                        No Mentor Request
+                    </h3>
+                    <div className="py-4">
+                        <p>
+                            You can request a mentor to help you with your project.
+                        </p>
+                    </div>
+                </div>
+            )
+            }
+        </div >
+    )
+}
+
 
 function TeamCard({ team, user }: { team: TeamData | null, user: NASAJWTPayload }) {
 

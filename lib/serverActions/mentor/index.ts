@@ -3,6 +3,7 @@
 import { CheckAuth } from "@/lib/CheckAuth";
 import prisma from "@/lib/db/prisma";
 import { MentorRequestStatus } from "@prisma/client";
+import { revalidatePath } from "next/cache";
 
 export const getMentor = async (teamId: string) => {
   const team = await prisma.team.findFirst({
@@ -75,6 +76,11 @@ export const getMentorBy = async (type: "id" | "email", thing: string) => {
 };
 
 export const getMentorsByProfession = async (professionId: number) => {
+  try {
+    await CheckAuth();
+  } catch {
+    return null;
+  }
   const ret = await prisma.user.findMany({
     where: {
       MentorProfession: {
@@ -111,6 +117,11 @@ export const getMentorsByProfession = async (professionId: number) => {
 };
 
 export const getMentorSlots = async (mentorId: string) => {
+  try {
+    await CheckAuth();
+  } catch {
+    return null;
+  }
   const ret = await prisma.mentorSlots.findMany({
     where: {
       userId: mentorId,
@@ -120,24 +131,55 @@ export const getMentorSlots = async (mentorId: string) => {
   return ret;
 };
 
-type MentorSlots = {
+export type TMentorSlots = {
   [key in MentorRequestStatus]: {
-    startTime: string;
-    endTime: string;
+    id: number;
+    startTime: Date;
+    endTime: Date;
+    team: {
+      id: string;
+      name: string;
+    };
   }[];
 } & {
   EMPTY: {
-    startTime: string;
-    endTime: string;
+    id: number;
+    startTime: Date;
+    endTime: Date;
   }[];
 };
 
 export const getMentorSlotsWithStatus = async (
   mentorId: string
-): Promise<MentorSlots> => {
+): Promise<TMentorSlots> => {
+  try {
+    await CheckAuth();
+  } catch {
+    return {
+      DONE: [],
+      PENDING: [],
+      CANCELED: [],
+      EMPTY: [],
+    };
+  }
   const mentorRequests = await prisma.mentorRequest.findMany({
     where: {
       userId: mentorId,
+    },
+    orderBy: {
+      startTime: "asc",
+    },
+    select: {
+      id: true,
+      startTime: true,
+      endTime: true,
+      status: true,
+      team: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
     },
   });
 
@@ -145,50 +187,192 @@ export const getMentorSlotsWithStatus = async (
     where: {
       userId: mentorId,
     },
+    orderBy: {
+      startTime: "asc",
+    },
+    select: {
+      startTime: true,
+      endTime: true,
+      id: true,
+    },
   });
 
-  const slots: MentorSlots = {
+  const slots: TMentorSlots = {
     DONE: [],
     PENDING: [],
-    REJECTED: [],
+    CANCELED: [],
     EMPTY: [],
   };
 
   mentorSlots.forEach((slot) => {
-    const start = new Date(slot.startTime).getTime();
-    const end = new Date(slot.endTime).getTime();
-
-    const requests = mentorRequests.filter((request) => {
-      const reqStart = new Date(request.startTime).getTime();
-      const reqEnd = new Date(request.endTime).getTime();
-
-      return reqStart >= start && reqEnd <= end;
+    slots["EMPTY"].push({
+      id: slot.id,
+      startTime: slot.startTime,
+      endTime: slot.endTime,
     });
+  });
 
-    if (requests.length === 0) {
-      slots.EMPTY.push({
-        startTime: slot.startTime,
-        endTime: slot.endTime,
-      });
-    } else {
-      const status = requests[0].status;
-      slots[status].push({
-        startTime: slot.startTime,
-        endTime: slot.endTime,
-      });
-
-      mentorRequests.splice(
-        mentorRequests.findIndex((req) => req.id === requests[0].id),
-        1
-      );
-
-      if (mentorRequests.length === 0) {
-        return slots;
-      }
-
-      return;
-    }
+  mentorRequests.forEach((request) => {
+    slots[request.status].push({
+      id: request.id,
+      startTime: request.startTime,
+      endTime: request.endTime,
+      team: {
+        id: request.team.id,
+        name: request.team.name,
+      },
+    });
   });
 
   return slots;
+};
+
+export const cancelMentorRequest = async (requestId: number) => {
+  try {
+    const currentUser = await CheckAuth("MENTOR");
+
+    // check the request for is mentor's
+    const request = await prisma.mentorRequest.findFirst({
+      where: {
+        id: requestId,
+        userId: currentUser.id,
+      },
+    });
+
+    if (!request) {
+      return {
+        success: false,
+        message: "Request not found",
+      };
+    }
+
+    if (request.status !== "PENDING") {
+      return {
+        success: false,
+        message: "Request is not pending",
+      };
+    }
+
+    await prisma.mentorRequest.update({
+      where: {
+        id: requestId,
+      },
+      data: {
+        status: "CANCELED",
+      },
+    });
+
+    revalidatePath("/board/mentor/slots", "page");
+
+    return {
+      success: true,
+      message: "Request cancelled",
+    };
+  } catch (e) {
+    console.error(e);
+    return {
+      success: false,
+      message: "Failed to cancel request",
+    };
+  }
+};
+
+export const markAsDoneMentorRequest = async (requestId: number) => {
+  try {
+    const currentUser = await CheckAuth("MENTOR");
+
+    // check the request for is mentor's
+    const request = await prisma.mentorRequest.findFirst({
+      where: {
+        id: requestId,
+        userId: currentUser.id,
+      },
+    });
+
+    if (!request) {
+      return {
+        success: false,
+        message: "Request not found",
+      };
+    }
+
+    if (request.status !== "PENDING") {
+      return {
+        success: false,
+        message: "Request is not pending",
+      };
+    }
+
+    await prisma.mentorRequest.update({
+      where: {
+        id: requestId,
+      },
+      data: {
+        status: "DONE",
+      },
+    });
+
+    revalidatePath("/board/mentor/slots", "page");
+
+    return {
+      success: true,
+      message: "Request marked as done",
+    };
+  } catch (e) {
+    console.error(e);
+    return {
+      success: false,
+      message: "Failed to mark request as done",
+    };
+  }
+};
+
+export const cancelMentorRequestByTeam = async (requestId: number) => {
+  try {
+    const currentUser = await CheckAuth("USER");
+
+    // check is the request for user's team
+    const request = await prisma.mentorRequest.findFirst({
+      where: {
+        id: requestId,
+        teamId: currentUser.teamId,
+      },
+    });
+
+    if (!request) {
+      return {
+        success: false,
+        message: "Request not found",
+      };
+    }
+
+    if (request.status !== "PENDING") {
+      return {
+        success: false,
+        message: "Request is not pending",
+      };
+    }
+
+    await prisma.mentorRequest.update({
+      where: {
+        id: requestId,
+      },
+      data: {
+        status: "CANCELED",
+      },
+    });
+
+    revalidatePath("/board", "page");
+
+    return {
+      success: true,
+      message: "Request cancelled",
+    };
+  } catch (e) {
+    console.error(e);
+    return {
+      success: false,
+      message: "Failed to cancel request",
+    };
+  }
 };

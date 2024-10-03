@@ -1,5 +1,6 @@
 import { Schedule } from "@/components/schedule";
 import { getMentorSlotsWithStatus } from "@/lib/serverActions/mentor";
+import { Fragment } from "react";
 
 export const dynamic = 'force-dynamic';
 
@@ -7,6 +8,11 @@ type PageParams = {
     professionId: string;
     mentorId: string;
 };
+
+export const metadata = {
+    title: "Mentor Request",
+    description: "Schedule a time with mentor",
+}
 
 export default async function Page({ params }: { params: PageParams }) {
 
@@ -25,18 +31,18 @@ export default async function Page({ params }: { params: PageParams }) {
             endDate: new Date(slot.endTime)
         }
     });
-    console.log(availableTimeSlots, bookedTimeSlots);
 
     return (
-        <>
-            <pre>{JSON.stringify(currentSlots, null, 2)}</pre>
+        <Fragment>
             <div>
                 <h2 className="text-3xl font-bold font-mono border-b border-blue-300 pb-2">Mentor Request</h2>
             </div>
             <div className="flex flex-col gap-4 font-mono my-4">
-                <span className="text-2xl font-bold">Mentors</span>
-                <Schedule startDate={new Date()} endDate={new Date(new Date().setDate(new Date().getDate() + 2))} availableTimeSlots={availableTimeSlots} bookedTimeSlots={bookedTimeSlots} />
+                <span className="font-bold">
+                    Schedule a time with mentor
+                </span>
+                <Schedule mentorId={params.mentorId} startDate={new Date()} endDate={new Date(new Date().setDate(new Date().getDate() + 2))} availableTimeSlots={availableTimeSlots} bookedTimeSlots={bookedTimeSlots} />
             </div>
-        </>
+        </Fragment>
     )
 }

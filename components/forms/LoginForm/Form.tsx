@@ -33,7 +33,10 @@ export const Form = () => {
     };
 
     return (
-        <div className="grid gap-4">
+        <form className="grid gap-4" onSubmit={(e) => {
+            e.preventDefault();
+            handleSubmit();
+        }}>
             <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -65,7 +68,7 @@ export const Form = () => {
             {state.status === "success" && (
                 <div className="text-green-500">{state.message}</div>
             )}
-        </div>
+        </form>
     )
 
 }

@@ -82,7 +82,7 @@ model MentorProfession {
 
 enum MentorRequestStatus {
   PENDING
-  REJECTED
+  CANCELED
   DONE
 }
 

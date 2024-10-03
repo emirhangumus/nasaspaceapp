@@ -58,8 +58,12 @@ export function Combobox({ items, value, onSelect, noItemsMessage, placeholder, 
     const [open, setOpen] = React.useState(false)
     const [v, setV] = React.useState(value || "")
 
+    React.useEffect(() => {
+        setV(value || "")
+    }, [value])
+
     return (
-        <Popover open={open} onOpenChange={setOpen}>
+        <Popover open={open} onOpenChange={setOpen} modal={true}>
             <PopoverTrigger asChild>
                 <Button
                     variant="outline"
