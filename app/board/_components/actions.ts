@@ -66,6 +66,7 @@ export async function sendNotification(
   }
 
   try {
+    let i = 0;
     for (const sub of subs) {
       await webpush.sendNotification(
         // @ts-ignore
@@ -76,6 +77,12 @@ export async function sendNotification(
           icon: "/icon.png",
         })
       );
+      i++;
+      if (i % 80 === 0) {
+        console.log("Sent", i, "notifications");
+        await new Promise((r) => setTimeout(r, 1000));
+        i = 0;
+      }
     }
     return { success: true };
   } catch (error) {
