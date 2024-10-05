@@ -61,6 +61,8 @@ export async function sendNotification(
     },
   });
 
+  console.log("Sending notification to", subs.length, "users");
+
   if (!subs.length) {
     return { success: false, error: "No subscriptions found" };
   }

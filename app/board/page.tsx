@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { getAnnouncements } from "@/lib/serverActions/announcement";
 import { getCurrentUser, getCurrentUserRole } from "@/lib/serverActions/auth";
-import { getMentorBy } from "@/lib/serverActions/mentor";
+import { getMentorBy, getMentorsTeams } from "@/lib/serverActions/mentor";
 import { getAllProfessions } from "@/lib/serverActions/professions";
 import { getMentorRequestByTeam } from "@/lib/serverActions/slots";
 import { getTeam, TeamData } from "@/lib/serverActions/team";
@@ -50,17 +50,49 @@ async function MentorBoard() {
     const mentor = await getMentorBy('id', user.data.id);
     if (!mentor) redirect("/");
     const isSubscribed = await isSub(user.data.id);
+    const allTeams = await getMentorsTeams(mentor.id);
 
     return (
         <div>
             <div className="flex flex-col gap-8">
                 <MentorProfile mentor={mentor} />
+                <MentorTeams teams={allTeams ? allTeams : []} />
                 <Announcements />
                 <PushNotificationManager userId={user.data.id} isSub={isSubscribed ? true : false} />
             </div>
         </div>
     )
 }
+
+async function MentorTeams({ teams }: {
+    teams: {
+        id: string;
+        name: string;
+    }[]
+}) {
+    return (
+        <div>
+            <h2 className="text-3xl font-bold font-mono border-b border-blue-300 pb-2 mb-4">Teams</h2>
+            <div className="grid grid-cols-1">
+                {teams.length > 0 ? teams.map((team) => (
+                    <div key={team.id} className="shadow-inner shadow-blue-400 border-x-2 border-t-2 last:border-b-2 first:rounded-t-xl last:rounded-b-xl border-blue-700 p-4 bg-gradient-to-br from-transparent from-60% to-blue-800">
+                        <h3 className="text-2xl font-bold font-mono">{team.name}</h3>
+                    </div>
+                )) : (
+                    <div className="shadow-inner shadow-blue-400 border-x-2 border-t-2 last:border-b-2 first:rounded-t-xl last:rounded-b-xl border-blue-700 p-4 bg-gradient-to-br from-transparent from-60% to-blue-800">
+                        <h3 className="text-2xl font-bold font-mono">No Teams</h3>
+                        <div className="py-4">
+                            <p>
+                                You are not mentoring any teams at the moment.
+                            </p>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    )
+}
+
 
 function MentorProfile({ mentor }: { mentor: any }) {
     return (

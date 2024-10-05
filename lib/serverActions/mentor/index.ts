@@ -382,3 +382,31 @@ export const cancelMentorRequestByTeam = async (requestId: number) => {
     };
   }
 };
+
+export const getMentorsTeams = async (mentorId: string) => {
+  try {
+    await CheckAuth();
+  } catch {
+    return null;
+  }
+  const ret = await prisma.teamMentor.findMany({
+    where: {
+      mentorId: mentorId,
+    },
+    select: {
+      team: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+  });
+
+  return ret.map((req) => {
+    return {
+      id: req.team.id,
+      name: req.team.name,
+    };
+  });
+};
