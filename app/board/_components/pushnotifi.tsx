@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import { subscribeUser, unsubscribeUser } from "./actions";
+import { subscribeUser } from "./actions";
 
 function urlBase64ToUint8Array(base64String: string) {
     const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
@@ -15,19 +15,18 @@ function urlBase64ToUint8Array(base64String: string) {
 }
 
 export function PushNotificationManager({ userId }: { userId: string }) {
-    const [isSupported, setIsSupported] = useState(false)
-    const [subscription, setSubscription] = useState<PushSubscription | null>(
+    const [, setSubscription] = useState<PushSubscription | null>(
         null
     )
 
     useEffect(() => {
         if ('serviceWorker' in navigator && 'PushManager' in window) {
-            setIsSupported(true)
             registerServiceWorker()
             setTimeout(() => {
                 subscribeToPush()
             }, 1000)
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     async function registerServiceWorker() {
@@ -50,12 +49,6 @@ export function PushNotificationManager({ userId }: { userId: string }) {
 
         setSubscription(sub)
         await subscribeUser(sub, userId)
-    }
-
-    async function unsubscribeFromPush() {
-        await subscription?.unsubscribe()
-        setSubscription(null)
-        await unsubscribeUser(userId)
     }
 
     return null;
