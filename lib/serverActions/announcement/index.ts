@@ -32,8 +32,13 @@ export const createAnnouncement = async (data: {
       },
       select: {
         id: true,
+        name: true,
       },
     });
+    console.log(
+      "sending notification to",
+      allUsers.map((u) => u.name).join(", ")
+    );
 
     await sendNotification(
       {

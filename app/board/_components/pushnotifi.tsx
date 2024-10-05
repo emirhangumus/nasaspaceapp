@@ -18,24 +18,25 @@ function urlBase64ToUint8Array(base64String: string) {
 export function PushNotificationManager({ userId, isSub }: { userId: string, isSub: boolean }) {
     const [subscribed, setSubscribed] = useState(isSub)
     const [isSupported, setIsSupported] = useState(false)
-    const [, setSubscription] = useState<PushSubscription | null>(
-        null
-    )
 
     useEffect(() => {
         if ('serviceWorker' in navigator && 'PushManager' in window) {
             setIsSupported(true)
             registerServiceWorker()
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
+    /**
+     * this is for, when the user is already subscribed to push notifications
+     */
     async function registerServiceWorker() {
         const registration = await navigator.serviceWorker.register('/sw.js', {
             scope: '/',
             updateViaCache: 'none',
         })
         const sub = await registration.pushManager.getSubscription()
-        setSubscription(sub)
+        if (sub) await subscribeUser(sub, userId)
     }
 
     async function subscribeToPush() {
@@ -47,7 +48,6 @@ export function PushNotificationManager({ userId, isSub }: { userId: string, isS
             ),
         })
 
-        setSubscription(sub)
         await subscribeUser(sub, userId)
         setSubscribed(true)
     }
@@ -65,14 +65,14 @@ export function PushNotificationManager({ userId, isSub }: { userId: string, isS
         <div>
             {subscribed ? (
                 <Button
-                    className="bg-red-500 text-white"
+                    className="bg-red-500 text-white hover:bg-red-600"
                     onClick={unsubscribeFromPush}
                 >
                     Unsubscribe
                 </Button>
             ) : (
                 <Button
-                    className="bg-green-500 text-white"
+                    className="bg-green-500 text-white hover:bg-green-600"
                     onClick={subscribeToPush}
                 >
                     Subscribe
