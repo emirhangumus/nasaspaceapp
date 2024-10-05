@@ -40,11 +40,12 @@ model User {
 }
 
 model Team {
-  id        String   @id
-  name      String
-  mentorId  String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id
+  name        String
+  mentorId    String?
+  tableNumber Int      @default(-1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   TeamUser      TeamUser[]
   MentorRequest MentorRequest[]
