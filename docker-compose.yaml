@@ -21,7 +21,7 @@ services:
     ports:
       - "3002:3002"
     depends_on:
-      - madcorp_db
+      - nasaapp_db_container
     env_file:
       - .env
 volumes:
