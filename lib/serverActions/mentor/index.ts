@@ -398,6 +398,7 @@ export const getMentorsTeams = async (mentorId: string) => {
         select: {
           id: true,
           name: true,
+          tableNumber: true,
         },
       },
     },
@@ -407,6 +408,7 @@ export const getMentorsTeams = async (mentorId: string) => {
     return {
       id: req.team.id,
       name: req.team.name,
+      tableNumber: req.team.tableNumber,
     };
   });
 };

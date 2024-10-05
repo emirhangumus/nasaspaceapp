@@ -68,6 +68,7 @@ async function MentorTeams({ teams }: {
     teams: {
         id: string;
         name: string;
+        tableNumber: number;
     }[]
 }) {
     return (
@@ -77,6 +78,9 @@ async function MentorTeams({ teams }: {
                 {teams.length > 0 ? teams.map((team) => (
                     <div key={team.id} className="shadow-inner shadow-blue-400 border-x-2 border-t-2 last:border-b-2 first:rounded-t-xl last:rounded-b-xl border-blue-700 p-4 bg-gradient-to-br from-transparent from-60% to-blue-800">
                         <h3 className="text-2xl font-bold font-mono">{team.name}</h3>
+                        <Badge>
+                            {team.tableNumber}
+                        </Badge>
                     </div>
                 )) : (
                     <div className="shadow-inner shadow-blue-400 border-x-2 border-t-2 last:border-b-2 first:rounded-t-xl last:rounded-b-xl border-blue-700 p-4 bg-gradient-to-br from-transparent from-60% to-blue-800">
