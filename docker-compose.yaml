@@ -5,7 +5,7 @@ services:
     volumes:
       - nasaapp_db_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "5433:5432"
     env_file:
       - .env
   nasaapp_postgres_container:
@@ -15,14 +15,14 @@ services:
       - "5555:80"
     env_file:
       - .env
-  # madcorp_web:
-  #   container_name: madcorp_web
-  #   build: .
-  #   ports:
-  #     - "3000:3000"
-  #   depends_on:
-  #     - madcorp_db
-  #   env_file:
-  #     - .env
+  madcorp_web:
+    container_name: madcorp_web
+    build: .
+    ports:
+      - "3002:3002"
+    depends_on:
+      - madcorp_db
+    env_file:
+      - .env
 volumes:
  nasaapp_db_data:

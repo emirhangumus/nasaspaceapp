@@ -35,7 +35,7 @@ COPY --from=builder /app/start.sh ./start.sh
 RUN chmod +x start.sh
 
 # Expose the port Next.js runs on
-EXPOSE 3000
+EXPOSE 3002
 
 # Command to run the app
 CMD ["/bin/sh", "start.sh"]
