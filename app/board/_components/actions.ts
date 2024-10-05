@@ -13,6 +13,12 @@ export async function subscribeUser(sub: PushSubscription, userId: string) {
   // In a production environment, you would want to store the subscription in a database
   // For example: await db.subscriptions.create({ data: sub })
 
+  await prisma.notificationSubs.deleteMany({
+    where: {
+      userId: userId,
+    },
+  });
+
   await prisma.notificationSubs.create({
     data: {
       data: sub,
@@ -26,6 +32,7 @@ export async function subscribeUser(sub: PushSubscription, userId: string) {
 export async function unsubscribeUser(userId: string) {
   // In a production environment, you would want to remove the subscription from the database
   // For example: await db.subscriptions.delete({ where: { ... } })
+  console.log("Unsubscribing user", userId);
 
   await prisma.notificationSubs.deleteMany({
     where: {

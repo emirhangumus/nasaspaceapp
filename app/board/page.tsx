@@ -16,6 +16,7 @@ import { redirect } from "next/navigation";
 import { PushNotificationManager } from "./_components/pushnotifi";
 import { MentorRequestCancelDialog } from "./_components/user/MentorRequestCancelDialog";
 import { NeedHelpCard } from "./_components/user/NeedHelp";
+import prisma from "@/lib/db/prisma";
 
 export const dynamic = 'force-dynamic';
 
@@ -48,13 +49,14 @@ async function MentorBoard() {
     if (!user.success || !user.data?.id) redirect("/");
     const mentor = await getMentorBy('id', user.data.id);
     if (!mentor) redirect("/");
+    const isSubscribed = await isSub(user.data.id);
 
     return (
         <div>
             <div className="flex flex-col gap-8">
-                <PushNotificationManager userId={user.data.id} />
                 <MentorProfile mentor={mentor} />
                 <Announcements />
+                <PushNotificationManager userId={user.data.id} isSub={isSubscribed ? true : false} />
             </div>
         </div>
     )
@@ -95,15 +97,16 @@ async function UserBoard() {
     if (!d) redirect("/?error=team-not-found");
     const professions = await getAllProfessions();
     const currentMentorRequest = await getMentorRequestByTeam(d.id);
+    const isSubscribed = await isSub(user.data.id);
 
     return (
         <div>
             <div className="flex flex-col gap-8">
-                <PushNotificationManager userId={user.data.id} />
                 <TeamCard team={d} user={user.data} />
                 <Announcements />
                 <TeamMentorRequest mentorRequest={currentMentorRequest} />
                 <NeedHelpCard professions={professions} />
+                <PushNotificationManager userId={user.data.id} isSub={isSubscribed ? true : false} />
             </div>
         </div>
     )
@@ -286,3 +289,10 @@ async function Announcements() {
     )
 }
 
+const isSub = async (userId: string) => {
+    return await prisma.notificationSubs.findFirst({
+        where: {
+            userId
+        }
+    })
+}

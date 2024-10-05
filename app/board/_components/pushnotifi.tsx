@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import { subscribeUser } from "./actions";
+import { subscribeUser, unsubscribeUser } from "./actions";
+import { Button } from "@/components/ui/button";
 
 function urlBase64ToUint8Array(base64String: string) {
     const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
@@ -14,19 +15,18 @@ function urlBase64ToUint8Array(base64String: string) {
     return outputArray
 }
 
-export function PushNotificationManager({ userId }: { userId: string }) {
+export function PushNotificationManager({ userId, isSub }: { userId: string, isSub: boolean }) {
+    const [subscribed, setSubscribed] = useState(isSub)
+    const [isSupported, setIsSupported] = useState(false)
     const [, setSubscription] = useState<PushSubscription | null>(
         null
     )
 
     useEffect(() => {
         if ('serviceWorker' in navigator && 'PushManager' in window) {
+            setIsSupported(true)
             registerServiceWorker()
-            setTimeout(() => {
-                subscribeToPush()
-            }, 1000)
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     async function registerServiceWorker() {
@@ -49,7 +49,35 @@ export function PushNotificationManager({ userId }: { userId: string }) {
 
         setSubscription(sub)
         await subscribeUser(sub, userId)
+        setSubscribed(true)
     }
 
-    return null;
+    async function unsubscribeFromPush() {
+        await unsubscribeUser(userId)
+        setSubscribed(false)
+    }
+
+    if (!isSupported) {
+        return null
+    }
+
+    return (
+        <div>
+            {subscribed ? (
+                <Button
+                    className="bg-red-500 text-white"
+                    onClick={unsubscribeFromPush}
+                >
+                    Unsubscribe
+                </Button>
+            ) : (
+                <Button
+                    className="bg-green-500 text-white"
+                    onClick={subscribeToPush}
+                >
+                    Subscribe
+                </Button>
+            )}
+        </div>
+    );
 }
