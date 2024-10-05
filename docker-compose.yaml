@@ -16,7 +16,7 @@ services:
     env_file:
       - .env
   nasaapp_web:
-    container_name: madcorp_web
+    container_name: nasaapp_web
     build: .
     ports:
       - "3002:3002"
