@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { register } from "@/lib/serverActions/auth";
 import { RoleName } from "@prisma/client";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 
 type FormState = {
     status: "idle" | "loading" | "error" | "success";
@@ -105,7 +105,7 @@ export const Form = ({ mode = "init" }: FormProps) => {
                     id="password" type="password" required />
             </div>
             {mode === "admin" && (
-                <>
+                <Fragment>
                     <div className="grid gap-2">
                         <Label htmlFor="role">Role</Label>
                         <Select value={role} onValueChange={(value) => setRole(value as RoleName)} >
@@ -119,7 +119,7 @@ export const Form = ({ mode = "init" }: FormProps) => {
                             </SelectContent>
                         </Select>
                     </div>
-                </>
+                </Fragment>
             )}
             <Button
                 disabled={state.status === "loading" || state.status === "success"}

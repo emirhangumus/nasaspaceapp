@@ -2,9 +2,11 @@
 
 import { cn } from "@/lib/utils";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 
 export const Header = () => {
+    const router = useRouter();
     const path = usePathname();
 
     if (path === "/board") return (
@@ -16,7 +18,7 @@ export const Header = () => {
         // back button
         <div className="flex items-center gap-4 mb-8 font-mono">
             <button
-                onClick={() => window.history.back()}
+                onClick={() => router.back()}
                 className="flex items-center justify-center h-6 w-6"
             >
                 <svg
@@ -41,11 +43,15 @@ export const Header = () => {
 }
 
 const Logo = ({ className }: { className?: string }) => {
-    return (<Image
-        src="/logo.png"
-        alt="Logo"
-        width={64}
-        height={64}
-        className={cn(className)}
-    />)
+    return (
+        <Link href="/board" className={cn(className)}>
+            <Image
+                src="/logo.png"
+                alt="Logo"
+                width={64}
+                height={64}
+                className={cn(className)}
+            />
+        </Link>
+    )
 };

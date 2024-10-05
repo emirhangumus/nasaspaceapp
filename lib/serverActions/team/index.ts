@@ -4,6 +4,7 @@ import prisma from "@/lib/db/prisma";
 import { Responser } from "@/lib/Responser";
 import { z } from "zod";
 import { getMentor } from "../mentor";
+import { CheckAuth } from "@/lib/CheckAuth";
 
 const consonants_numbers = "bcdfghjklmnpqrstvwxyz0123456789";
 
@@ -118,4 +119,62 @@ export const getTeam = async (id: string | null): Promise<TeamData | null> => {
     users: teamUsers.map((tu) => tu.user),
     mentor: mentor ? mentor : null,
   };
+};
+
+export const assignUserToTeam = async (
+  {
+    teamId,
+    userId,
+  }: {
+    teamId: string;
+    userId: string;
+  },
+  request?: Request
+) => {
+  try {
+    await CheckAuth("ADMIN", request);
+
+    if (!teamId || !userId) {
+      return Responser({
+        message: "Invalid data",
+        success: false,
+        data: null,
+      });
+    }
+
+    // if user is already assigned to team, remove them
+    const existing = await prisma.teamUser.findFirst({
+      where: {
+        teamId: teamId,
+        userId: userId,
+      },
+    });
+
+    if (existing) {
+      await prisma.teamUser.delete({
+        where: {
+          id: existing.id,
+        },
+      });
+    }
+
+    await prisma.teamUser.create({
+      data: {
+        teamId: teamId,
+        userId: userId,
+      },
+    });
+
+    return Responser({
+      data: null,
+      message: "User assigned to team",
+      success: true,
+    });
+  } catch {
+    return Responser({
+      message: "Failed to assign user to team",
+      success: false,
+      data: null,
+    });
+  }
 };

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Combobox } from "@/components/ui/combobox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { SLOT_SKIP_INTERVAL } from "@/lib/contants";
 import { cancelMentorRequest, getMentorBy, markAsDoneMentorRequest, TMentorSlots } from "@/lib/serverActions/mentor";
@@ -14,7 +15,7 @@ import type { AwaitedReturnType } from "@/lib/types";
 import { dateToTimeString, generateDayTimes } from "@/lib/utils";
 import { InfoCircledIcon } from "@radix-ui/react-icons";
 import { MoreHorizontalIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 
 type MentorSlotsProps = {
     mentor: AwaitedReturnType<typeof getMentorBy>;
@@ -81,7 +82,7 @@ const CreateNewSlot = () => {
     }
 
     return (
-        <>
+        <Fragment>
             <PageHeading title="Mentor Slots" subtitle="Create and manage your slots. Slots are daily time slots when you are available for mentoring." />
             <div className="flex flex-col gap-4">
                 <div className="flex gap-4">
@@ -90,14 +91,13 @@ const CreateNewSlot = () => {
                 </div>
                 <Button disabled={!ready} onClick={handleCreateSlot}>Create Slot</Button>
             </div>
-        </>
+        </Fragment>
     )
 }
 
 const ManageExistingSlots = ({ slots }: { slots: MentorSlotsProps['slots'] }) => {
 
     const { toast } = useToast();
-
 
     const deleteSlotHandler = async (start: Date, end: Date) => {
         const ret = await deleteSlotWithRange(start, end);
@@ -153,7 +153,6 @@ const ManageExistingSlots = ({ slots }: { slots: MentorSlotsProps['slots'] }) =>
     return (
         <div>
             <PageHeading title="Manage Slots" subtitle="Here are your opened slots. You can close them at any time." />
-            {/* <pre>{JSON.stringify(slots, null, 2)}</pre> */}
             <div className="flex flex-col gap-8">
                 <div className="flex flex-col gap-4">
                     <h2 className="text-xl font-bold">Empty Slots</h2>
@@ -196,28 +195,7 @@ const ManageExistingSlots = ({ slots }: { slots: MentorSlotsProps['slots'] }) =>
                                     <span>{dateToTimeString(slot.endTime)}</span>
                                 </div>
                                 <div className="flex gap-2 items-center">
-                                    <Dialog>
-                                        <DialogTrigger asChild>
-                                            <Button variant="ghost" className="h-6 w-6 p-0">
-                                                <span className="sr-only">Open menu</span>
-                                                <InfoCircledIcon className="h-4 w-4" />
-                                            </Button>
-                                        </DialogTrigger>
-                                        <DialogContent className="bg-zinc-950 sm:max-w-[425px]">
-                                            <DialogHeader>
-                                                <DialogTitle>Team Info</DialogTitle>
-                                                <DialogDescription>
-                                                    You can see the team info here.
-                                                </DialogDescription>
-                                                <div className="flex flex-col items-start py-4">
-                                                    <Badge variant="outline">
-                                                        {slot.team.id}
-                                                    </Badge>
-                                                    <span className="text-3xl font-bold">{slot.team.name}</span>
-                                                </div>
-                                            </DialogHeader>
-                                        </DialogContent>
-                                    </Dialog>
+                                    <InformationDialog slot={slot} />
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <Button variant="ghost" className="h-6 w-6 p-0">
@@ -250,28 +228,7 @@ const ManageExistingSlots = ({ slots }: { slots: MentorSlotsProps['slots'] }) =>
                                     -
                                 </span>
                                 <span>{dateToTimeString(slot.endTime)}</span>
-                                <Dialog>
-                                    <DialogTrigger asChild>
-                                        <Button variant="ghost" className="h-6 w-6 p-0">
-                                            <span className="sr-only">Open menu</span>
-                                            <InfoCircledIcon className="h-4 w-4" />
-                                        </Button>
-                                    </DialogTrigger>
-                                    <DialogContent className="bg-zinc-950 sm:max-w-[425px]">
-                                        <DialogHeader>
-                                            <DialogTitle>Team Info</DialogTitle>
-                                            <DialogDescription>
-                                                You can see the team info here.
-                                            </DialogDescription>
-                                            <div className="flex flex-col items-start py-4">
-                                                <Badge variant="outline">
-                                                    {slot.team.id}
-                                                </Badge>
-                                                <span className="text-3xl font-bold">{slot.team.name}</span>
-                                            </div>
-                                        </DialogHeader>
-                                    </DialogContent>
-                                </Dialog>
+                                <InformationDialog slot={slot} />
                             </li>
                         )) : <li className="text-gray-500">No rejected slots</li>}
                     </ul>
@@ -286,33 +243,62 @@ const ManageExistingSlots = ({ slots }: { slots: MentorSlotsProps['slots'] }) =>
                                     -
                                 </span>
                                 <span>{dateToTimeString(slot.endTime)}</span>
-                                <Dialog>
-                                    <DialogTrigger asChild>
-                                        <Button variant="ghost" className="h-6 w-6 p-0">
-                                            <span className="sr-only">Open menu</span>
-                                            <InfoCircledIcon className="h-4 w-4" />
-                                        </Button>
-                                    </DialogTrigger>
-                                    <DialogContent className="bg-zinc-950 sm:max-w-[425px]">
-                                        <DialogHeader>
-                                            <DialogTitle>Team Info</DialogTitle>
-                                            <DialogDescription>
-                                                You can see the team info here.
-                                            </DialogDescription>
-                                            <div className="flex flex-col items-start py-4">
-                                                <Badge variant="outline">
-                                                    {slot.team.id}
-                                                </Badge>
-                                                <span className="text-3xl font-bold">{slot.team.name}</span>
-                                            </div>
-                                        </DialogHeader>
-                                    </DialogContent>
-                                </Dialog>
+                                <InformationDialog slot={slot} />
                             </li>
                         )) : <li className="text-gray-500">No done slots</li>}
                     </ul>
                 </div>
             </div>
         </div>
+    )
+}
+
+function InformationDialog({ slot }: { slot: MentorSlotsProps['slots']['PENDING'][0] }) {
+
+    return (
+        <Dialog>
+            <DialogTrigger asChild>
+                <Button variant="ghost" className="h-6 w-6 p-0">
+                    <span className="sr-only">Open menu</span>
+                    <InfoCircledIcon className="h-4 w-4" />
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-zinc-950 sm:max-w-[425px]">
+                <DialogHeader>
+                    <DialogTitle>
+                        Slot Information
+                    </DialogTitle>
+                    <DialogDescription>
+                        Details about the slot.
+                    </DialogDescription>
+                    <div className="flex flex-col items-start py-4">
+                        <Badge variant="outline">
+                            {slot.team.id}
+                        </Badge>
+                        <span className="text-3xl font-bold">{slot.team.name}</span>
+                    </div>
+                    <div className="grid gap-2">
+                        <div className="grid grid-cols-2 gap-2">
+                            <div className="flex flex-col gap-2 text-start bg-zinc-900 p-4 rounded-lg">
+                                <h3 className="text-lg font-bold">Duration</h3>
+                                <p>{new Date(slot.endTime.getTime() - slot.startTime.getTime()).getMinutes()} minutes</p>
+                            </div>
+                            <div className="flex flex-col gap-2 text-start bg-zinc-900 p-4 rounded-lg">
+                                <h3 className="text-lg font-bold">
+                                    Created At
+                                </h3>
+                                <p className="text-xs">{slot.createdAt?.toLocaleString()}</p>
+                            </div>
+                        </div>
+                        <div className="flex flex-col gap-2 text-start bg-zinc-900 p-4 rounded-lg">
+                            <h3 className="text-lg font-bold">Note</h3>
+                            <ScrollArea className="h-32">
+                                {slot.note ? slot.note : 'No note provided.'}
+                            </ScrollArea>
+                        </div>
+                    </div>
+                </DialogHeader>
+            </DialogContent >
+        </Dialog >
     )
 }

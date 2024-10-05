@@ -8,6 +8,13 @@ services:
       - "5432:5432"
     env_file:
       - .env
+  nasaapp_postgres_container:
+    container_name: nasaapp_postgres_container
+    image: dpage/pgadmin4
+    ports:
+      - "5555:80"
+    env_file:
+      - .env
   # madcorp_web:
   #   container_name: madcorp_web
   #   build: .

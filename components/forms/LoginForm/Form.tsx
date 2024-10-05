@@ -3,8 +3,10 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 import { login } from "@/lib/serverActions/auth";
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 type FormState = {
     status: "idle" | "loading" | "error" | "success";
@@ -18,6 +20,22 @@ export const Form = () => {
         status: "idle",
         message: "",
     });
+    const { toast } = useToast();
+    const searchParams = useSearchParams();
+    const err = searchParams.get("error");
+
+    useEffect(() => {
+        console.log(err);
+        if (err && err == 'team-not-found') {
+            setTimeout(() => {
+                toast({
+                    title: "Error",
+                    description: "Team not found. Please contact with a mentor.",
+                    variant: 'destructive'
+                });
+            }, 0);
+        }
+    }, [err, toast]);
 
     const handleSubmit = async () => {
         setState({ status: "loading", message: "" });

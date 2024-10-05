@@ -9,6 +9,7 @@ import { Combobox } from "../ui/combobox";
 import { Label } from "../ui/label";
 import { createMentorRequest } from "@/lib/serverActions/slots";
 import { Textarea } from "../ui/textarea";
+import { useRouter } from "next/navigation";
 
 type ScheduleProps = {
     startDate: Date;
@@ -58,7 +59,6 @@ export const Schedule = ({ mentorId, startDate, endDate, slotSpace, availableTim
 
     return (
         <div className="flex flex-col">
-            {/* <pre>{JSON.stringify(schedule, null, 2)}</pre> */}
             <div className="grid gap-1">
                 {schedule.availableTimeSlots.length > 0 ? schedule.availableTimeSlots.map((slot, index) => {
                     return (
@@ -78,7 +78,7 @@ export const Schedule = ({ mentorId, startDate, endDate, slotSpace, availableTim
                             </DialogContent>
                         </Dialog>
                     )
-                }) : <div>No slots available</div>}
+                }) : <div className="text-center">No slots available - If this is a mistake, please contact the mentor</div>}
             </div>
         </div >
     )
@@ -91,6 +91,8 @@ type ApproveDialogContentProps = {
 }
 
 const ApproveDialogContent = ({ startTimeItems, mentorId, closeDialogCallback }: ApproveDialogContentProps) => {
+    const router = useRouter();
+
     const [reserveStart, setReserveStart] = useState<string>('');
     const [reserveMinutes, setReserveMinutes] = useState<number>(0);
     const [note, setNote] = useState<string>('');
@@ -104,7 +106,15 @@ const ApproveDialogContent = ({ startTimeItems, mentorId, closeDialogCallback }:
 
         const selectable_index = SELECTABLE_MINUTES.findIndex((v) => v === reserveMinutes);
         const reverse_start_index = startTimeItems.findIndex((v) => v.value === reserveStart);
-        if (selectable_index === -1 || reverse_start_index === -1) return;
+        if (reverse_start_index === -1) {
+            setNotifyState({ message: 'Invalid time selection', type: 'error' });
+            return;
+        }
+
+        if (selectable_index === -1) {
+            setNotifyState({ message: 'Invalid duration selection', type: 'error' });
+            return;
+        }
 
         if (!(reverse_start_index + selectable_index < startTimeItems.length - 1)) {
             setNotifyState({ message: 'Invalid time selection', type: 'error' });
@@ -121,6 +131,7 @@ const ApproveDialogContent = ({ startTimeItems, mentorId, closeDialogCallback }:
         if (ret.success) {
             setNotifyState({ message: 'Slot approved successfully', type: 'success' });
             closeDialogCallback();
+            router.push('/board');
         } else {
             setNotifyState({ message: ret.message || 'Failed to approve slot', type: 'error' });
         }

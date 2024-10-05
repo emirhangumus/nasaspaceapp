@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { getAnnouncements } from "@/lib/serverActions/announcement";
 import { getCurrentUser, getCurrentUserRole } from "@/lib/serverActions/auth";
 import { getMentorBy } from "@/lib/serverActions/mentor";
@@ -8,11 +9,13 @@ import { getMentorRequestByTeam } from "@/lib/serverActions/slots";
 import { getTeam, TeamData } from "@/lib/serverActions/team";
 import { AwaitedReturnType, NASAJWTPayload } from "@/lib/types";
 import { dateToTimeString } from "@/lib/utils";
+import { Users2Icon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { NeedHelpCard } from "./_components/user/NeedHelp";
+import { PushNotificationManager } from "./_components/pushnotifi";
 import { MentorRequestCancelDialog } from "./_components/user/MentorRequestCancelDialog";
+import { NeedHelpCard } from "./_components/user/NeedHelp";
 
 export const dynamic = 'force-dynamic';
 
@@ -48,8 +51,8 @@ async function MentorBoard() {
 
     return (
         <div>
-            {/* <pre>{JSON.stringify(mentor, null, 2)}</pre> */}
             <div className="flex flex-col gap-8">
+                <PushNotificationManager userId={user.data.id} />
                 <MentorProfile mentor={mentor} />
                 <Announcements />
             </div>
@@ -87,15 +90,16 @@ function MentorProfile({ mentor }: { mentor: any }) {
 
 async function UserBoard() {
     const user = await getCurrentUser();
-    if (!user.success || !user.data?.teamId) redirect("/");
+    if (!user.success || !user.data?.teamId) redirect("/?error=team-not-found");
     const d = await getTeam(user.data.teamId);
-    if (!d) redirect("/");
+    if (!d) redirect("/?error=team-not-found");
     const professions = await getAllProfessions();
     const currentMentorRequest = await getMentorRequestByTeam(d.id);
 
     return (
         <div>
             <div className="flex flex-col gap-8">
+                <PushNotificationManager userId={user.data.id} />
                 <TeamCard team={d} user={user.data} />
                 <Announcements />
                 <TeamMentorRequest mentorRequest={currentMentorRequest} />
@@ -169,7 +173,7 @@ function TeamCard({ team, user }: { team: TeamData | null, user: NASAJWTPayload 
     };
 
     return (
-        <div className="rounded-xl from-blue-600 to-blue-700 bg-gradient-to-tr shadow-inner shadow-blue-300 border-zinc-200 min-h-[600px] overflow-hidden">
+        <div className="rounded-xl from-blue-600 to-blue-700 bg-gradient-to-tr shadow-inner shadow-blue-300 border-zinc-200 overflow-hidden">
             <div className="grid grid-cols-6 border-b border-blue-300 px-8">
                 <div className="border-r border-blue-300 col-span-4 min-h-24 flex items-end pt-16">
                     <div className="flex flex-col justify-end">
@@ -193,20 +197,38 @@ function TeamCard({ team, user }: { team: TeamData | null, user: NASAJWTPayload 
                         <span>{team.mentor ? <Link href={`/board/user/${team.mentor.id}`}>{team.mentor.name} {team.mentor.surname}</Link> : "No mentor"}</span>
                     </div>
                 </div>
-                <div className="flex flex-col gap-4 px-8 py-4">
-                    <h3 className="text-xl font-bold font-mono underline">Members</h3>
-                    <div className="flex flex-col gap-4">
-                        {team.users.map((user) => (
-                            <div key={user.id} className="flex flex-row gap-4 items-center">
-                                <Image src="/nasa.png" width={50} height={50} alt="NASA Logo" />
-                                <span>{user.name} {user.surname}</span>
-                            </div>
-                        ))}
-                    </div>
+                <div className="flex justify-between items-end px-8 py-4">
+                    <p className="text-xs">NASA Space Apps Challenge</p>
+                    <TeamMembers team={team} />
                 </div>
             </div>
         </div>
     );
+}
+
+function TeamMembers({ team }: { team: TeamData }) {
+    return (
+        <Dialog>
+            <DialogTrigger>
+                <Users2Icon size={24} />
+            </DialogTrigger>
+            <DialogContent className="bg-blue-700 border-blue-300 border-t-2 border-b-2">
+                <DialogHeader>
+                    <DialogTitle>
+                        Team Members
+                    </DialogTitle>
+                </DialogHeader>
+                <div className="flex flex-col gap-4 mt-8">
+                    {team.users.map((user) => (
+                        <div key={user.id} className="flex flex-row gap-4 items-center">
+                            <Image src="/nasa.png" width={50} height={50} alt="NASA Logo" />
+                            <span>{user.name} {user.surname}</span>
+                        </div>
+                    ))}
+                </div>
+            </DialogContent>
+        </Dialog>
+    )
 }
 
 
@@ -239,7 +261,7 @@ async function Announcements() {
         <div>
             <h2 className="text-3xl font-bold font-mono border-b border-blue-300 pb-2 mb-4">Announcements</h2>
             <div className="grid">
-                {announcements.data.map((announcement) => (
+                {announcements.data.length > 0 ? announcements.data.map((announcement) => (
                     <div key={announcement.id} className="shadow-inner shadow-blue-400 border-x-2 border-t-2 last:border-b-2 first:rounded-t-xl last:rounded-b-xl border-blue-700 p-4 bg-gradient-to-br from-transparent from-60% to-blue-800">
                         <h3 className="text-2xl font-bold font-mono">{announcement.title}</h3>
                         <div className="py-4">
@@ -249,8 +271,18 @@ async function Announcements() {
                             <span className="text-xs font-mono">{new Date(announcement.createdAt).toLocaleString()}</span>
                         </div>
                     </div>
-                ))}
+                )) : (
+                    <div className="shadow-inner shadow-blue-400 border-x-2 border-t-2 last:border-b-2 first:rounded-t-xl last:rounded-b-xl border-blue-700 p-4 bg-gradient-to-br from-transparent from-60% to-blue-800">
+                        <h3 className="text-2xl font-bold font-mono">No Announcements</h3>
+                        <div className="py-4">
+                            <p>
+                                There are no announcements at the moment.
+                            </p>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     )
 }
+

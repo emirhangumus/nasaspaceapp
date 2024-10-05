@@ -1,5 +1,6 @@
 "use server";
 
+import { sendNotification } from "@/app/board/_components/actions";
 import { CheckAuth } from "@/lib/CheckAuth";
 import prisma from "@/lib/db/prisma";
 import { isValidTimeRange, toISODateTime } from "@/lib/utils";
@@ -175,11 +176,6 @@ export const createMentorRequest = async (rawData: {
     endTime.setMinutes(endTime.getMinutes() + duration);
     const startTime = new Date(toISODateTime(start));
 
-    console.log("Start time", startTime);
-    console.log("End time", endTime);
-
-    console.log(await prisma.mentorSlots.findMany());
-
     // split the mentorSlot into two parts
     // I think this is `AND` thing is not right but its working.
     const selectedSlot = await prisma.mentorSlots.findFirst({
@@ -195,8 +191,6 @@ export const createMentorRequest = async (rawData: {
         },
       },
     });
-
-    console.log(selectedSlot);
 
     if (!selectedSlot) {
       return {
@@ -234,7 +228,15 @@ export const createMentorRequest = async (rawData: {
       },
     });
 
-    revalidatePath("/board/need-help/[professionId]/[mentorId]/", "layout");
+    revalidatePath("/board/need-help/[professionId]/[mentorId]/");
+
+    await sendNotification(
+      {
+        title: "New mentor request",
+        message: `A new mentor request has been created by ${currentUser.name} ${currentUser.surname}`,
+      },
+      [mentorId]
+    );
 
     return {
       success: true,

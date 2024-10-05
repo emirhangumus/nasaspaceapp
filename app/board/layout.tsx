@@ -6,7 +6,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <div className="container mx-auto p-4">
+        <div className="container mx-auto p-4 max-w-lg">
             <Header />
             {children}
         </div>

@@ -140,6 +140,8 @@ export type TMentorSlots = {
       id: string;
       name: string;
     };
+    note?: string;
+    createdAt?: Date;
   }[];
 } & {
   EMPTY: {
@@ -180,6 +182,8 @@ export const getMentorSlotsWithStatus = async (
           name: true,
         },
       },
+      note: true,
+      createdAt: true,
     },
   });
 
@@ -221,6 +225,8 @@ export const getMentorSlotsWithStatus = async (
         id: request.team.id,
         name: request.team.name,
       },
+      note: request.note,
+      createdAt: request.createdAt,
     });
   });
 

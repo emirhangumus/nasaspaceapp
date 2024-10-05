@@ -115,15 +115,18 @@ const registerSchema = z.object({
   role: z.union([z.literal("ADMIN"), z.literal("USER"), z.literal("MENTOR")]),
 });
 
-export const register = async (rowData: {
-  email: string;
-  password: string;
-  name: string;
-  surname: string;
-  role: RoleName;
-}) => {
+export const register = async (
+  rawData: {
+    email: string;
+    password: string;
+    name: string;
+    surname: string;
+    role: RoleName;
+  },
+  req?: Request
+) => {
   try {
-    const data = registerSchema.parse(rowData);
+    const data = registerSchema.parse(rawData);
 
     // if any user exist
     const isUserExist = !!(await prisma.user.findFirst());
@@ -155,7 +158,7 @@ export const register = async (rowData: {
       });
     }
 
-    const check = await CheckAuth("ADMIN");
+    const check = await CheckAuth("ADMIN", req);
 
     if (!check) {
       return Responser({
@@ -198,7 +201,13 @@ export const register = async (rowData: {
     }
 
     return Responser({
-      data: null,
+      data: {
+        id: newUser.id,
+        email: newUser.email,
+        name: newUser.name,
+        surname: newUser.surname,
+        role: newUser.role,
+      },
       message: "User created successfully",
       success: true,
     });

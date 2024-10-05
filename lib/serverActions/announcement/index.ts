@@ -1,5 +1,6 @@
 "use server";
 
+import { sendNotification } from "@/app/board/_components/actions";
 import { CheckAuth } from "@/lib/CheckAuth";
 import prisma from "@/lib/db/prisma";
 import { Responser } from "@/lib/Responser";
@@ -24,6 +25,23 @@ export const createAnnouncement = async (data: {
         content: data.content,
       },
     });
+
+    const allUsers = await prisma.user.findMany({
+      where: {
+        role: "USER",
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    await sendNotification(
+      {
+        title: "✨ Announcement ✨",
+        message: data.content,
+      },
+      allUsers.map((u) => u.id)
+    );
 
     return Responser({
       success: true,
